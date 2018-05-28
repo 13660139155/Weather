@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/item_shared"
+        android:title="分享天气"
+        app:showAsAction="never"/>
+
+    <item
+        android:id="@+id/item_location"
+        android:title="城市定位"
+        app:showAsAction="never" />
+
+</menu>
