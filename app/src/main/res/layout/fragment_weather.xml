@@ -3,7 +3,8 @@
     android:id="@+id/fragment_weather"
     android:layout_height="match_parent"
     android:layout_width="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:background="#fff">
 
     <android.support.v4.widget.SwipeRefreshLayout
         android:id="@+id/swipe_refresh"
@@ -14,7 +15,8 @@
         <ScrollView
             android:id="@+id/scroll_view"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="match_parent"
+            android:fillViewport="true" >
 
             <LinearLayout
                 android:orientation="vertical"
@@ -48,6 +50,39 @@
                     <include layout="@layout/item2_weather"/>
                     <include layout="@layout/item3_weather"/>
 
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="未来三天天气预报"
+                        android:layout_gravity="center_horizontal"
+                        android:gravity="center_horizontal"
+                        android:layout_margin="15dp"/>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="#939090">
+                    </View>
+
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <android.support.v7.widget.RecyclerView
+                            android:id="@+id/recycler_view_line"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content">
+
+                        </android.support.v7.widget.RecyclerView>
+
+                    </RelativeLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="7dp"
+                        android:background="#7da6a6a6">
+                    </View>
+
                     <include layout="@layout/suggestion_out"/>
                     <include layout="@layout/suggestion_car"/>
                     <include layout="@layout/suggestion_sport"/>
@@ -61,6 +96,5 @@
         </ScrollView>
 
     </android.support.v4.widget.SwipeRefreshLayout>
-
 
 </LinearLayout>

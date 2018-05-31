@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="120dp"
+    android:layout_height="wrap_content"
+    android:background="#fff">
+
+    <TextView
+        android:id="@+id/text_line_date"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="10dp"
+        android:text="05-30"
+        android:textSize="18sp"/>
+
+    <TextView
+        android:id="@+id/text_line_day_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="5dp"
+        android:text="多云"
+        android:textSize="18sp"/>
+
+    <ImageView
+        android:id="@+id/image_line_day_code"
+        android:layout_width="38dp"
+        android:layout_height="38dp"
+        android:layout_gravity="center"
+        android:layout_marginTop="5dp"
+        android:src="@drawable/one"/>
+
+    <com.example.asus.weather.view.WeatherLineView
+        android:id="@+id/weather_line_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        custom:lineWidth="1dp"
+        custom:dotRadius="5dp"
+        custom:textSize="10dp"
+        custom:textColor="#000"
+        custom:textDotDistance="10dp"/>
+
+    <ImageView
+        android:id="@+id/image_line_night_code"
+        android:layout_width="38dp"
+        android:layout_height="38dp"
+        android:layout_gravity="center"
+        android:src="@drawable/one"/>
+
+    <TextView
+        android:id="@+id/text_line_night_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginBottom="10dp"
+        android:layout_marginTop="5dp"
+        android:text="多云"
+        android:textSize="18sp"/>
+
+</LinearLayout>

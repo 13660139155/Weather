@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <declare-styleable name="WeatherLineView">
+        <!-- 文字大小 -->
+        <attr name="textSize" format="dimension"/>
+        <!-- 文字的颜色 -->
+        <attr name="textColor" format="color"/>
+        <!-- 绘制的线的宽度 -->
+        <attr name="lineWidth" format="dimension"/>
+        <!-- 绘制的圆点的半径 -->
+        <attr name="dotRadius" format="dimension"/>
+        <!-- 文字离圆点的距离 -->
+        <attr name="textDotDistance" format="dimension"/>
+    </declare-styleable>
+</resources>

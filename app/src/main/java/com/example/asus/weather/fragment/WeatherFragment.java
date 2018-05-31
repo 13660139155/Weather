@@ -1,13 +1,17 @@
 package com.example.asus.weather.fragment;
 
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,8 +19,10 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.asus.weather.MyApplication;
 import com.example.asus.weather.R;
 import com.example.asus.weather.Temp.Temp;
+import com.example.asus.weather.adapter.DailyAdapter;
 import com.example.asus.weather.file.SPFDatabase;
 import com.example.asus.weather.json.Daily;
 import com.example.asus.weather.json.Location;
@@ -29,6 +35,8 @@ import com.example.asus.weather.unit.JSONUnity;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import static com.example.asus.weather.MainActivity.IS_NETWORK_AVAILABLE;
 
@@ -42,6 +50,9 @@ public class WeatherFragment extends Fragment implements SwipeRefreshLayout.OnRe
 
     private static final String KEY = "key";
     private  String UPDATAALL = "com.example.asus.weather.UPDATAALL";
+    private LinearLayoutManager linearLayoutManager;
+    private RecyclerView recyclerView;
+    private DailyAdapter dailyAdapter;
 
     Weather weather;
     ImageView imageViewBg;
@@ -110,6 +121,8 @@ public class WeatherFragment extends Fragment implements SwipeRefreshLayout.OnRe
         textViewFishingB = (TextView)view.findViewById(R.id.text_sug_fishing_brief);
         textViewSportB = (TextView)view.findViewById(R.id.text_sug_sport_brief);
         textViewTravelB = (TextView)view.findViewById(R.id.text_sug_travel_brief);
+
+        recyclerView = (RecyclerView)view.findViewById(R.id.recycler_view_line);
 
         swipeRefreshLayout.setColorSchemeColors(R.color.colorPrimary);
         swipeRefreshLayout.setOnRefreshListener(this);
@@ -201,6 +214,25 @@ public class WeatherFragment extends Fragment implements SwipeRefreshLayout.OnRe
                     textViewTemp3.setText(dailyArrayList.get(2).dailyLow + "℃" + "/" + dailyArrayList.get(0).dailyHigh + "℃");
                     setNowTabImageByCode(dailyArrayList.get(2).dailyCodeDay, 3);
                     weather.dailyArrayList = dailyArrayList;
+
+                    List<Integer> lowData = new ArrayList<>();
+                    List<Integer> highData = new ArrayList<>();
+                    int low;
+                    int high;
+                    for(int i = 0; i < dailyArrayList.size(); i++){
+                        lowData.add(Integer.parseInt(dailyArrayList.get(i).dailyLow));
+                        highData.add(Integer.parseInt(dailyArrayList.get(i).dailyHigh));
+                    }
+                    Collections.sort(lowData);
+                    low = lowData.get(0);
+                    Collections.sort(highData);
+                    high = highData.get(2);
+                    linearLayoutManager = new FullyLinearLayoutManager(getActivity());
+                    linearLayoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
+                    recyclerView.setLayoutManager(linearLayoutManager);
+                    recyclerView.setNestedScrollingEnabled(false);
+                    dailyAdapter = new DailyAdapter(dailyArrayList, low, high);
+                    recyclerView.setAdapter(dailyAdapter);
                 }
             }
         }
@@ -488,41 +520,59 @@ public class WeatherFragment extends Fragment implements SwipeRefreshLayout.OnRe
      */
     private void setWhestherDataFromSPF(Now now, ArrayList<Daily> dailyArrayList, Suggestion suggestion, ArrayList<Location> locationArrayList){
 
+        textViewNowTemp.setText(now.nowTemperature + "℃");
+        textViewNowText.setText(now.nowText);
+        setNowTabImageByCode(now.nowCode, 0);
+        textViewText1.setText(now.nowText);
+        setNowTabImageByCode(now.nowCode, 0);
+        weather.now = now;
 
-            textViewNowTemp.setText(now.nowTemperature + "℃");
-            textViewNowText.setText(now.nowText);
-            setNowTabImageByCode(now.nowCode, 0);
-            textViewText1.setText(now.nowText);
-            setNowTabImageByCode(now.nowCode, 0);
-            weather.now = now;
+        if(dailyArrayList.get(0).dailyPrecip.equals("")){
+            textViewNowPrecip.setText("11%");
+        }else {
+            textViewNowPrecip.setText(dailyArrayList.get(0).dailyPrecip + "%");
+        }
+        textViewNowWind.setText(dailyArrayList.get(0).dailyWindSpeed + "km/h");
+        textViewNowWindDirection.setText(dailyArrayList.get(0).dailyWindDirection + "风");
+        textViewNowWindScale.setText(dailyArrayList.get(0).dailyWindScale + "级");
+        textViewTemp1.setText(dailyArrayList.get(0).dailyLow + "℃" + "/" + dailyArrayList.get(0).dailyHigh + "℃");
+        textViewText2.setText(dailyArrayList.get(1).dailyTextDay);
+        textViewTemp2.setText(dailyArrayList.get(1).dailyLow + "℃" + "/" + dailyArrayList.get(0).dailyHigh + "℃");
+        setNowTabImageByCode(dailyArrayList.get(1).dailyCodeDay, 2);
+        textViewText3.setText(dailyArrayList.get(2).dailyTextDay);
+        textViewTemp3.setText(dailyArrayList.get(2).dailyLow + "℃" + "/" + dailyArrayList.get(0).dailyHigh + "℃");
+        setNowTabImageByCode(dailyArrayList.get(2).dailyCodeDay, 3);
+        weather.dailyArrayList = dailyArrayList;
 
-            if(dailyArrayList.get(0).dailyPrecip.equals("")){
-                textViewNowPrecip.setText("11%");
-            }else {
-                textViewNowPrecip.setText(dailyArrayList.get(0).dailyPrecip + "%");
-            }
-            textViewNowWind.setText(dailyArrayList.get(0).dailyWindSpeed + "km/h");
-            textViewNowWindDirection.setText(dailyArrayList.get(0).dailyWindDirection + "风");
-            textViewNowWindScale.setText(dailyArrayList.get(0).dailyWindScale + "级");
-            textViewTemp1.setText(dailyArrayList.get(0).dailyLow + "℃" + "/" + dailyArrayList.get(0).dailyHigh + "℃");
-            textViewText2.setText(dailyArrayList.get(1).dailyTextDay);
-            textViewTemp2.setText(dailyArrayList.get(1).dailyLow + "℃" + "/" + dailyArrayList.get(0).dailyHigh + "℃");
-            setNowTabImageByCode(dailyArrayList.get(1).dailyCodeDay, 2);
-            textViewText3.setText(dailyArrayList.get(2).dailyTextDay);
-            textViewTemp3.setText(dailyArrayList.get(2).dailyLow + "℃" + "/" + dailyArrayList.get(0).dailyHigh + "℃");
-            setNowTabImageByCode(dailyArrayList.get(2).dailyCodeDay, 3);
-            weather.dailyArrayList = dailyArrayList;
+        List<Integer> lowData = new ArrayList<>();
+        List<Integer> highData = new ArrayList<>();
+        int low;
+        int high;
+        for(int i = 0; i < dailyArrayList.size(); i++){
+            lowData.add(Integer.parseInt(dailyArrayList.get(i).dailyLow));
+            highData.add(Integer.parseInt(dailyArrayList.get(i).dailyHigh));
+        }
+        Collections.sort(lowData);
+        low = lowData.get(0);
+        Collections.sort(highData);
+        high = highData.get(2);
+        linearLayoutManager = new FullyLinearLayoutManager(getActivity());
+        linearLayoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
+        recyclerView.setLayoutManager(linearLayoutManager);
+        recyclerView.setNestedScrollingEnabled(false);//禁止rcyc嵌套滑动
+        dailyAdapter = new DailyAdapter(dailyArrayList, low, high);
+        recyclerView.setAdapter(dailyAdapter);
 
-            textViewDressingB.setText("穿衣指数：" + suggestion.sugDressing.dressingBrief);
-            textViewCarB.setText("洗车指数：" + suggestion.sugCarWashing.washingBrief);
-            textViewUvB.setText("紫外线强度：" + suggestion.sugUv.uvBrief);
-            textViewSportB.setText("运动指数：" + suggestion.sugSport.sportBrief);
-            textViewTravelB.setText("旅游指数：" + suggestion.sugTravel.travelBrief);
-            textViewFishingB.setText("感冒指数：" + suggestion.sugFishing.fishingBrief);
-            weather.suggestion = suggestion;
+        textViewDressingB.setText("穿衣指数：" + suggestion.sugDressing.dressingBrief);
+        textViewCarB.setText("洗车指数：" + suggestion.sugCarWashing.washingBrief);
+        textViewUvB.setText("紫外线强度：" + suggestion.sugUv.uvBrief);
+        textViewSportB.setText("运动指数：" + suggestion.sugSport.sportBrief);
+        textViewTravelB.setText("旅游指数：" + suggestion.sugTravel.travelBrief);
+        textViewFishingB.setText("感冒指数：" + suggestion.sugFishing.fishingBrief);
+        weather.suggestion = suggestion;
 
-            textViewNowLocation.setText(locationArrayList.get(0).locationPath);
-            weather.location = locationArrayList.get(0);
+        textViewNowLocation.setText(locationArrayList.get(0).locationPath);
+        weather.location = locationArrayList.get(0);
 
 
     }
@@ -539,6 +589,99 @@ public class WeatherFragment extends Fragment implements SwipeRefreshLayout.OnRe
         }
         return str;
     }
+
+    public class FullyLinearLayoutManager extends LinearLayoutManager {
+
+        private final String TAG = FullyLinearLayoutManager.class.getSimpleName();
+
+        public FullyLinearLayoutManager(Context context) {
+            super(context);
+        }
+
+        public FullyLinearLayoutManager(Context context, int orientation, boolean reverseLayout) {
+            super(context, orientation, reverseLayout);
+        }
+
+        private int[] mMeasuredDimension = new int[2];
+
+        @Override
+        public void onMeasure(RecyclerView.Recycler recycler, RecyclerView.State state,
+                              int widthSpec, int heightSpec) {
+
+            final int widthMode = View.MeasureSpec.getMode(widthSpec);
+            final int heightMode = View.MeasureSpec.getMode(heightSpec);
+            final int widthSize = View.MeasureSpec.getSize(widthSpec);
+            final int heightSize = View.MeasureSpec.getSize(heightSpec);
+
+            Log.i(TAG, "onMeasure called. \nwidthMode " + widthMode
+                    + " \nheightMode " + heightSpec
+                    + " \nwidthSize " + widthSize
+                    + " \nheightSize " + heightSize
+                    + " \ngetItemCount() " + getItemCount());
+
+            int width = 0;
+            int height = 0;
+            for (int i = 0; i < getItemCount(); i++) {
+                measureScrapChild(recycler, i,
+                        View.MeasureSpec.makeMeasureSpec(i, View.MeasureSpec.UNSPECIFIED),
+                        View.MeasureSpec.makeMeasureSpec(i, View.MeasureSpec.UNSPECIFIED),
+                        mMeasuredDimension);
+
+                if (getOrientation() == HORIZONTAL) {
+                    width = width + mMeasuredDimension[0];
+                    if (i == 0) {
+                        height = mMeasuredDimension[1];
+                    }
+                } else {
+                    height = height + mMeasuredDimension[1];
+                    if (i == 0) {
+                        width = mMeasuredDimension[0];
+                    }
+                }
+            }
+            switch (widthMode) {
+                case View.MeasureSpec.EXACTLY:
+                    width = widthSize;
+                case View.MeasureSpec.AT_MOST:
+                case View.MeasureSpec.UNSPECIFIED:
+            }
+
+            switch (heightMode) {
+                case View.MeasureSpec.EXACTLY:
+                    height = heightSize;
+                case View.MeasureSpec.AT_MOST:
+                case View.MeasureSpec.UNSPECIFIED:
+            }
+
+            setMeasuredDimension(width, height);
+        }
+
+        private void measureScrapChild(RecyclerView.Recycler recycler, int position, int widthSpec,
+                                       int heightSpec, int[] measuredDimension) {
+            try {
+                View view = recycler.getViewForPosition(0);//fix 动态添加时报IndexOutOfBoundsException
+
+                if (view != null) {
+                    RecyclerView.LayoutParams p = (RecyclerView.LayoutParams) view.getLayoutParams();
+
+                    int childWidthSpec = ViewGroup.getChildMeasureSpec(widthSpec,
+                            getPaddingLeft() + getPaddingRight(), p.width);
+
+                    int childHeightSpec = ViewGroup.getChildMeasureSpec(heightSpec,
+                            getPaddingTop() + getPaddingBottom(), p.height);
+
+                    view.measure(childWidthSpec, childHeightSpec);
+                    measuredDimension[0] = view.getMeasuredWidth() + p.leftMargin + p.rightMargin;
+                    measuredDimension[1] = view.getMeasuredHeight() + p.bottomMargin + p.topMargin;
+                    recycler.recycleView(view);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+            }
+        }
+    }
+
 }
 
 
