@@ -5,7 +5,6 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -16,13 +15,13 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
+import android.view.Display;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -32,6 +31,8 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.ScrollView;
 import android.widget.Toast;
 
@@ -40,30 +41,31 @@ import com.baidu.location.BDLocation;
 import com.baidu.location.LocationClient;
 import com.baidu.location.LocationClientOption;
 import com.example.asus.weather.Temp.Temp;
-import com.example.asus.weather.adapter.CityManageAdapter;
 import com.example.asus.weather.adapter.FragAdapter;
 import com.example.asus.weather.db.SQLDatabase;
 import com.example.asus.weather.file.SPFDatabase;
 import com.example.asus.weather.fragment.WeatherFragment;
 import com.example.asus.weather.json.Now;
-import com.example.asus.weather.json.Weather;
 import com.example.asus.weather.services.WeatherUpdataService;
 import com.example.asus.weather.unit.ActivityCollector;
+import com.example.asus.weather.unit.MyPopupWindow;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.AbstractSet;
 import java.util.ArrayList;
-import java.util.HashSet;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, ViewPager.OnPageChangeListener {
 
     ArrayList<Fragment> fragmentArrayList;//天气界面集合
     ViewPager viewPager;//页面切换sp
+    LinearLayout dotContainer;//底部导航栏圆点容器
     FragAdapter fragAdapter;
     ImageView imageViewAdd;
     ScrollView scrollView;
+    Toolbar toolbar;
+    ImageView imageViewThree;//底部弹出菜单按钮
 
+    private int currentDorPosition = 0;//当前圆点位置
     private String UPDATAALL = "com.example.asus.weather.UPDATAALL";
     private LocationClient locationClient;//定位
     public static boolean IS_NETWORK_AVAILABLE = true;
@@ -72,6 +74,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private SQLDatabase sqlDatabase;
     private int pagePosition;
     private ArrayList<String> pageId = new ArrayList<>();
+    private MyPopupWindow myPopupWindow;//弹窗
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,7 +87,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         registerReceiver(networkChangeReceiver, intentFilter);
         locationClient = new LocationClient(getApplicationContext());
         locationClient.registerLocationListener(new MyLocationListener());
-
         if(Build.VERSION.SDK_INT >= 21){
             View decorView = getWindow().getDecorView();
             decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
@@ -105,11 +107,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         imageViewAdd = (ImageView) findViewById(R.id.image_add);
         viewPager = (ViewPager) findViewById(R.id.viewpager);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.main_toolbar);
+        toolbar = (Toolbar) findViewById(R.id.main_toolbar);
+        imageViewThree = (ImageView)findViewById(R.id.image_three_point);
+        dotContainer = (LinearLayout)findViewById(R.id.linear_dot_container);
         scrollView = (ScrollView)findViewById(R.id.scroll_view);
+
         fragmentArrayList = new ArrayList<>();
         setSupportActionBar(toolbar);
         imageViewAdd.setOnClickListener(this);
+        imageViewThree.setOnClickListener(this);
+        viewPager.setOnPageChangeListener(this);
 
         openLocation();
 
@@ -145,6 +152,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     }
                 }
             }
+         /* 设置底部圆点 */
+            if(dotContainer.getChildCount() != 0){
+                dotContainer.removeAllViews();
+            }
+            if(arrayList.size() == 1){
+                dotContainer.setVisibility(View.GONE);
+            }
+            for(int i = 0; i < arrayList.size(); i++){
+                ImageView imageView = new ImageView(MainActivity.this);
+                if(i == currentDorPosition){
+                    imageView.setImageResource(R.drawable.guide_dot_black);
+                }else {
+                    imageView.setImageResource(R.drawable.guide_dot_withe);
+                }
+                dotContainer.addView(imageView);
+            }
+
         }else {//第一次进入程序
             ArrayList<String> arrayList = quryFromSQL("Address", "address");
             if(arrayList.size() != 0){
@@ -156,13 +180,63 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     pageId.add(s);
                 }
             }
+             /* 设置底部圆点 */
+            if(dotContainer.getChildCount() != 0){
+                dotContainer.removeAllViews();
+            }
+            if(arrayList.size() == 1){
+                dotContainer.setVisibility(View.GONE);
+            }
+            for(int i = 0; i < arrayList.size(); i++){
+                ImageView imageView = new ImageView(MainActivity.this);
+                if(i == currentDorPosition){
+                    imageView.setImageResource(R.drawable.guide_dot_black);
+                }else {
+                    imageView.setImageResource(R.drawable.guide_dot_withe);
+                }
+                dotContainer.addView(imageView);
+            }
+
         }
         if(fragmentArrayList.size() != 0){
             fragAdapter = new FragAdapter(getSupportFragmentManager(), fragmentArrayList);
             viewPager.setAdapter(fragAdapter);
             fragAdapter.notifyDataSetChanged();
         }
-        viewPager.setOnPageChangeListener(this);
+
+        //弹出菜单
+        myPopupWindow = new MyPopupWindow(MainActivity.this, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT,  new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                switch (v.getId()){
+                    case R.id.text_location:
+                        Temp.IS_LOCATION = 1;
+                        locationClient.requestLocation();
+                        myPopupWindow.dismiss();
+                        break;
+                    case R.id.text_shared:
+                        Intent intent = new Intent(Intent.ACTION_SEND);
+                        intent.setType("text/plain");
+                        intent.putExtra(Intent.EXTRA_SUBJECT, "我是标题");
+                        Now now = Temp.treeMapWeatherAddress.get(pageId.get(pagePosition));
+                        intent.putExtra(Intent.EXTRA_TEXT, now.nowText + " / "  + now.nowTemperature + "℃" + "\n" + now.update);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(Intent.createChooser(intent, "分享到"));
+                        //Bitmap bitmap = shotScrollView(scrollView);
+                        myPopupWindow.dismiss();
+                        break;
+                    default:
+                        break;
+                }
+            }
+        });
+
+        myPopupWindow.setOnDismissListener(new PopupWindow.OnDismissListener() {
+            @Override
+            public void onDismiss() {
+                //  changeBackgoundAlpha(1.0f);
+            }
+        });
     }
 
     @Override
@@ -172,6 +246,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onPageSelected(int position) {
         pagePosition = position;
+        currentDorPosition = position;
+        for(int i = 0; i < dotContainer.getChildCount(); i++){
+            ImageView imageView = (ImageView)dotContainer.getChildAt(i);
+            if(i == currentDorPosition){
+                imageView.setImageResource(R.drawable.guide_dot_black);
+            }else {
+                imageView.setImageResource(R.drawable.guide_dot_withe);
+            }
+        }
     }
 
     @Override
@@ -188,7 +271,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             if (bdLocation == null) {
                 return;
             }
-
             String data = bdLocation.getCity();//中文城市
             if(data == null){
                 data = "广州";
@@ -209,10 +291,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }else {
                     pageId.add(newData);
                 }
+                if (fragmentArrayList.size() != 0){
+                    fragmentArrayList.clear();
+                }
                 if(arrayList.size() == 0 || arrayList == null){// 程序第一次安装进入程序，数据库没有数据
-                    if (fragmentArrayList.size() != 0){
-                        fragmentArrayList.clear();
-                    }
                     fragmentArrayList.add(WeatherFragment.newFragment(newData));
                     fragAdapter = new FragAdapter(getSupportFragmentManager(), fragmentArrayList);
                     viewPager.setAdapter(fragAdapter);
@@ -222,9 +304,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     fragAdapter.notifyDataSetChanged();
                 }else if(arrayList.size() == 1){//
                     if(arrayList.get(0).compareTo(newData) == 0){
-                        if (fragmentArrayList.size() != 0){
-                            fragmentArrayList.clear();
-                        }
                         fragmentArrayList.add(WeatherFragment.newFragment(newData));
                         fragAdapter = new FragAdapter(getSupportFragmentManager(), fragmentArrayList);
                         viewPager.setAdapter(fragAdapter);
@@ -233,6 +312,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         fragAdapter.addItem(newData);
                         fragAdapter.notifyDataSetChanged();
                     }
+                }
+
+                /* 设置底部圆点 */
+                if(dotContainer.getChildCount() != 0){
+                    dotContainer.removeAllViews();
+                }
+                if(arrayList.size() == 1){
+                    dotContainer.setVisibility(View.GONE);
+                }
+                for(int i = 0; i < arrayList.size(); i++){
+                    ImageView imageView = new ImageView(MainActivity.this);
+                    if(i == currentDorPosition){
+                        imageView.setImageResource(R.drawable.guide_dot_black);
+                    }else {
+                        imageView.setImageResource(R.drawable.guide_dot_withe);
+                    }
+                    dotContainer.addView(imageView);
                 }
 
                 Intent intent1 = new Intent();
@@ -268,15 +364,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     fragAdapter = new FragAdapter(getSupportFragmentManager(), fragmentArrayList);
                     viewPager.setAdapter(fragAdapter);
                     Toast.makeText(MainActivity.this, "定位到" + bdLocation.getDistrict() + bdLocation.getCity() + bdLocation.getCountry(), Toast.LENGTH_SHORT).show();
+                      /* 设置底部圆点 */
+                    if(dotContainer.getChildCount() != 0){
+                        dotContainer.removeAllViews();
+                    }
+                    if(arrayList.size() == 1){
+                        dotContainer.setVisibility(View.GONE);
+                    }
+                    for(int i = 0; i < arrayList.size(); i++){
+                        ImageView imageView = new ImageView(MainActivity.this);
+                        if(i == currentDorPosition){
+                            imageView.setImageResource(R.drawable.guide_dot_black);
+                        }else {
+                            imageView.setImageResource(R.drawable.guide_dot_withe);
+                        }
+                        dotContainer.addView(imageView);
+                    }
                 }
             }
         }
     }
 
-
     /**
      * 各种控件点击事件
-     *
      * @param v
      */
     @Override
@@ -285,6 +395,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.image_add:
                 Intent intent = new Intent(MainActivity.this, CityManageActivity.class);
                 startActivityForResult(intent, 1);
+                break;
+            case R.id.image_three_point:
+                myPopupWindow.showOnView(toolbar);
+                //changeBackgoundAlpha(0.5f);
                 break;
             default:
                 break;
@@ -311,46 +425,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void openLocation() {
         initLocationClient();
         locationClient.start();
-    }
-
-    /**
-     * 创建底部弹出菜单
-     *
-     * @param menu
-     * @return
-     */
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.toolbar, menu);
-        return true;
-    }
-
-    /**
-     * 弹出菜单选项点击事件
-     *
-     * @param item
-     * @return
-     */
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.item_shared:
-                Intent intent = new Intent(Intent.ACTION_SEND);
-                intent.setType("text/plain");
-                intent.putExtra(Intent.EXTRA_SUBJECT, "我是标题");
-                Now now = Temp.treeMapWeatherAddress.get(pageId.get(pagePosition));
-                intent.putExtra(Intent.EXTRA_TEXT, now.nowText + " / "  + now.nowTemperature + "℃" + "\n" + now.update);
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(Intent.createChooser(intent, "分享到"));
-                break;
-            case R.id.item_location:
-                Temp.IS_LOCATION = 1;
-                locationClient.requestLocation();
-                break;
-            default:
-                break;
-        }
-        return true;
     }
 
     @Override
@@ -455,6 +529,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             fragAdapter = new FragAdapter(getSupportFragmentManager(), fragmentArrayList);
                             viewPager.setAdapter(fragAdapter);
                         }
+                        /* 设置底部圆点 */
+                        if(dotContainer.getChildCount() != 0){
+                            dotContainer.removeAllViews();
+                        }
+                        if(arrayList.size() == 1){
+                            dotContainer.setVisibility(View.GONE);
+                        }
+                        for(int i = 0; i < arrayList.size(); i++){
+                            ImageView imageView = new ImageView(MainActivity.this);
+                            if(i == currentDorPosition){
+                                imageView.setImageResource(R.drawable.guide_dot_black);
+                            }else {
+                                imageView.setImageResource(R.drawable.guide_dot_withe);
+                            }
+                            dotContainer.addView(imageView);
+                        }
                     }
                 }
             break;
@@ -524,7 +614,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      * @param context
      * @return
      */
-    private static int getStatusBarHeight(Context context) {
+    private int getStatusBarHeight(Context context) {
         int statusBarHeight = 0;
         Resources res = context.getResources();
         int resourceId = res.getIdentifier("status_bar_height", "dimen", "android");
@@ -532,5 +622,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             statusBarHeight = res.getDimensionPixelSize(resourceId);
         }
         return statusBarHeight;
+    }
+
+    public static Bitmap shotScrollView(ScrollView scrollView) {
+        int h = 0;
+        Bitmap bitmap = null;
+        for (int i = 0; i < scrollView.getChildCount(); i++) {
+            h += scrollView.getChildAt(i).getHeight();
+            scrollView.getChildAt(i).setBackgroundColor(Color.parseColor("#ffffff"));
+        }
+        bitmap = Bitmap.createBitmap(scrollView.getWidth(), h, Bitmap.Config.RGB_565);
+        final Canvas canvas = new Canvas(bitmap);
+        scrollView.draw(canvas);
+        return bitmap;
+    }
+
+        /**
+         * 改变背景透明度
+         */
+    private void changeBackgoundAlpha(String color){
+//        WindowManager.LayoutParams lp = getWindow().getAttributes();
+//        lp.alpha = alpha;
+//        getWindow().setAttributes(lp);
     }
 }

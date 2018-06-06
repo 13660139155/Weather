@@ -25,20 +25,43 @@
         android:background="?attr/colorPrimary"
         android:layout_alignParentBottom="true">
 
-        <RelativeLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
-
-            <ImageView
-                android:id="@+id/image_add"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:src="@drawable/add"
-                android:layout_alignParentLeft="true"/>
-
-        </RelativeLayout>
-
     </android.support.v7.widget.Toolbar>
 
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/viewpager"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true">
+
+        <ImageView
+            android:id="@+id/image_add"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:src="@drawable/add2"
+            android:layout_marginLeft="15dp"
+            android:layout_alignParentLeft="true" />
+
+
+        <ImageView
+            android:id="@+id/image_three_point"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:src="@drawable/three_point"
+            android:layout_alignParentRight="true"
+            android:layout_marginRight="15dp"/>
+
+    </RelativeLayout>
+
+    <LinearLayout
+        android:id="@+id/linear_dot_container"
+        android:orientation="horizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="20dp">
+
+    </LinearLayout>
 
 </RelativeLayout>

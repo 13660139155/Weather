@@ -34,6 +34,6 @@
         android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
         app:elevation="10dp"
-        android:src="@drawable/add2"/>
+        android:src="@drawable/add"/>
 
 </android.support.design.widget.CoordinatorLayout>

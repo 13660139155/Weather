@@ -43,6 +43,10 @@ public class FragAdapter extends FragmentStatePagerAdapter {
         return PagerAdapter.POSITION_NONE;
     }
 
+    /**
+     * 添加
+     * @param data
+     */
     public void addItem(String data){
         Fragment fragment = WeatherFragment.newFragment(data);
         ArrayList<Fragment> list = new ArrayList<>();
@@ -50,6 +54,16 @@ public class FragAdapter extends FragmentStatePagerAdapter {
         this.mFragments.removeAll(this.mFragments);
         this.mFragments.add(fragment);
         this.mFragments.addAll(list);
+        notifyDataSetChanged();
+    }
+
+    /**
+     * 删除
+     * @param data
+     */
+    public void deleteItem(String data){
+        Fragment fragment = WeatherFragment.newFragment(data);
+        this.mFragments.remove(fragment);
         notifyDataSetChanged();
     }
 
