@@ -62,7 +62,7 @@ public class CityManageAdapter extends RecyclerView.Adapter<CityManageAdapter.My
                     ArrayList<String> arrayListAddress = quryFromSQL("Address", "address");
                     for(String s : arrayListAddress){
                         if (arrayList.get(i).location != null){
-                            if(s.compareTo(arrayList.get(i).location.locationId) == 0 || s.compareTo(encode(arrayList.get(i).location.locationName)) == 0){
+                            if(s.compareTo(arrayList.get(i).location.locationId) == 0){
                                 deleteS = s;
                             }
                         }
@@ -72,6 +72,10 @@ public class CityManageAdapter extends RecyclerView.Adapter<CityManageAdapter.My
                         MyApplication.getContext().sendBroadcast(intent);
                     }
                     deleteFromSQL("Address", "address == ?", deleteS);
+                    if(Temp.deleteArrayList.size() != 0){
+                        Temp.deleteArrayList.clear();
+                    }
+                    Temp.deleteArrayList.add(deleteS);
                     Temp.IS_DELETE = 1;
                     arrayList.remove(i);
                     notifyItemRemoved(i);

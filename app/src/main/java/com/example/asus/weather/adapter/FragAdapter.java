@@ -1,5 +1,6 @@
 package com.example.asus.weather.adapter;
 
+import android.app.Activity;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
@@ -7,7 +8,10 @@ import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.PagerAdapter;
 import android.support.v7.app.ActionBar;
+import android.util.Log;
+import android.view.ViewGroup;
 
+import com.example.asus.weather.MyApplication;
 import com.example.asus.weather.fragment.WeatherFragment;
 
 import java.util.ArrayList;
@@ -20,16 +24,17 @@ import java.util.ArrayList;
 public class FragAdapter extends FragmentStatePagerAdapter {
 
     private ArrayList<Fragment> mFragments;
-    private FragmentManager mf;
+    private FragmentManager fragmentManager;
 
     public FragAdapter(FragmentManager fm,ArrayList<Fragment> fragments) {
         super(fm);
         mFragments = fragments;
-        mf = fm;
+        fragmentManager = fm;
     }
 
     @Override
     public Fragment getItem(int arg0) {
+        Log.d("Fragment", "getItem：" + arg0);
         return mFragments.get(arg0);
     }
 
@@ -41,6 +46,14 @@ public class FragAdapter extends FragmentStatePagerAdapter {
     @Override
     public int getItemPosition(Object object) {
         return PagerAdapter.POSITION_NONE;
+    }
+
+    @Override
+    public Object instantiateItem(ViewGroup container, int position) {
+        Fragment fragment = (Fragment) super.instantiateItem(container, position);
+        if (!mFragments.contains(fragment))
+            return null;
+        return fragment;
     }
 
     /**
@@ -62,9 +75,11 @@ public class FragAdapter extends FragmentStatePagerAdapter {
      * @param data
      */
     public void deleteItem(String data){
-        Fragment fragment = WeatherFragment.newFragment(data);
-        this.mFragments.remove(fragment);
+        for(int i = 0; i < mFragments.size(); i++){
+            if(mFragments.get(i).getArguments().getString("key").compareTo(data) == 0){
+                mFragments.remove(mFragments.get(i));
+            }
+        }
         notifyDataSetChanged();
     }
-
 }

@@ -13,6 +13,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
@@ -42,12 +43,17 @@ import com.baidu.location.LocationClient;
 import com.baidu.location.LocationClientOption;
 import com.example.asus.weather.Temp.Temp;
 import com.example.asus.weather.adapter.FragAdapter;
+import com.example.asus.weather.adapter.ListSearchAdapter;
 import com.example.asus.weather.db.SQLDatabase;
 import com.example.asus.weather.file.SPFDatabase;
 import com.example.asus.weather.fragment.WeatherFragment;
+import com.example.asus.weather.json.Location;
 import com.example.asus.weather.json.Now;
+import com.example.asus.weather.json.Weather;
 import com.example.asus.weather.services.WeatherUpdataService;
 import com.example.asus.weather.unit.ActivityCollector;
+import com.example.asus.weather.unit.HttpUnity;
+import com.example.asus.weather.unit.JSONUnity;
 import com.example.asus.weather.unit.MyPopupWindow;
 
 import java.io.UnsupportedEncodingException;
@@ -65,6 +71,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     Toolbar toolbar;
     ImageView imageViewThree;//底部弹出菜单按钮
 
+    private ArrayList<Location> locationArrayList;
     private int currentDorPosition = 0;//当前圆点位置
     private String UPDATAALL = "com.example.asus.weather.UPDATAALL";
     private LocationClient locationClient;//定位
@@ -122,86 +129,73 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         Intent intent = getIntent();
         String address = intent.getStringExtra("address");
+        ArrayList<String> arrayList = quryFromSQL("Address", "address");
         if(pageId != null || pageId.size() != 0){
             pageId.clear();
         }
+
         if (!TextUtils.isEmpty(address)) {//从其他活动跳转来
-            ArrayList<String> arrayList = quryFromSQL("Address", "address");
-            if (address.compareTo("WS0E9D8WN298") != 0) {
-                fragmentArrayList.add(WeatherFragment.newFragment(address));
-                pageId.add(address);
-                if (arrayList.size() != 0) {
-                    for (String s : arrayList) {
-                        if (s.compareTo(address) == 0) {
-                            continue;
-                        }
-                        fragmentArrayList.add(WeatherFragment.newFragment(s));
-                        pageId.add(s);
-                    }
-                }
-            }else {
-                fragmentArrayList.add(WeatherFragment.newFragment(address));
-                pageId.add(address);
-                if (arrayList.size() != 0) {
-                    for (String s : arrayList) {
-                        if (s.compareTo(address) == 0 || s.compareTo(returnData("广州")) == 0) {
-                            continue;
-                        }
-                        fragmentArrayList.add(WeatherFragment.newFragment(s));
-                        pageId.add(s);
-                    }
-                }
-            }
-         /* 设置底部圆点 */
-            if(dotContainer.getChildCount() != 0){
-                dotContainer.removeAllViews();
-            }
-            if(arrayList.size() == 1){
-                dotContainer.setVisibility(View.GONE);
-            }
-            for(int i = 0; i < arrayList.size(); i++){
-                ImageView imageView = new ImageView(MainActivity.this);
-                if(i == currentDorPosition){
-                    imageView.setImageResource(R.drawable.guide_dot_black);
-                }else {
-                    imageView.setImageResource(R.drawable.guide_dot_withe);
-                }
-                dotContainer.addView(imageView);
+            if(fragmentArrayList.size() != 0){
+                fragmentArrayList.clear();
             }
 
-        }else {//第一次进入程序
-            ArrayList<String> arrayList = quryFromSQL("Address", "address");
-            if(arrayList.size() != 0){
-                for(String s : arrayList){
-                    if(s.compareTo(returnData("广州")) == 0){
-                        continue;
-                    }
+            fragmentArrayList.add(WeatherFragment.newFragment(address));
+            pageId.add(address);
+            for(String s : arrayList){
+                if(s.compareTo(address) != 0){
                     fragmentArrayList.add(WeatherFragment.newFragment(s));
                     pageId.add(s);
                 }
             }
-             /* 设置底部圆点 */
-            if(dotContainer.getChildCount() != 0){
-                dotContainer.removeAllViews();
-            }
-            if(arrayList.size() == 1){
-                dotContainer.setVisibility(View.GONE);
-            }
-            for(int i = 0; i < arrayList.size(); i++){
-                ImageView imageView = new ImageView(MainActivity.this);
-                if(i == currentDorPosition){
-                    imageView.setImageResource(R.drawable.guide_dot_black);
-                }else {
-                    imageView.setImageResource(R.drawable.guide_dot_withe);
-                }
-                dotContainer.addView(imageView);
-            }
 
+        }else {//第一次进入程序
+            if(arrayList.size() != 0 && arrayList != null){
+                String location = SPFDatabase.extractData("location");
+                if(location != null){
+                    int k = 1;
+                    for(String s : arrayList){
+                        if(s.compareTo(location) == 0)  k = 0;
+                    }
+                    if(k == 1){
+                        for(String s : arrayList){
+                            fragmentArrayList.add(WeatherFragment.newFragment(s));
+                            pageId.add(s);
+                        }
+                    }else {//本地天气置顶
+                        fragmentArrayList.add(WeatherFragment.newFragment(location));
+                        pageId.add(location);
+                        for(String s : arrayList){
+                            if(s.compareTo(location) != 0){
+                                fragmentArrayList.add(WeatherFragment.newFragment(s));
+                                pageId.add(s);
+                            }
+                        }
+                    }
+                }
+            }
         }
+
         if(fragmentArrayList.size() != 0){
             fragAdapter = new FragAdapter(getSupportFragmentManager(), fragmentArrayList);
             viewPager.setAdapter(fragAdapter);
             fragAdapter.notifyDataSetChanged();
+        }
+
+         /* 设置底部圆点 */
+        if(dotContainer.getChildCount() != 0){
+            dotContainer.removeAllViews();
+        }
+        if(arrayList.size() == 1){
+            dotContainer.setVisibility(View.GONE);
+        }
+        for(int i = 0; i < arrayList.size(); i++){
+            ImageView imageView = new ImageView(MainActivity.this);
+            if(i == currentDorPosition){
+                imageView.setImageResource(R.drawable.guide_dot_black);
+            }else {
+                imageView.setImageResource(R.drawable.guide_dot_withe);
+            }
+            dotContainer.addView(imageView);
         }
 
         //弹出菜单
@@ -276,112 +270,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 data = "广州";
             }
 
-            if(Temp.IS_STARTACTIVITY == 1){//第一次进入主活动
-                Temp.IS_STARTACTIVITY = 0;
-                ArrayList<String> arrayList = quryFromSQL("Address", "address");
-                insert(arrayList, data);
-                String newData = returnData(data);
-                Temp.location = newData;
-                SPFDatabase.preferenceData(newData, newData);
-                if((pageId != null || pageId.size() != 0) && pageId.size() != 1){
-                    ArrayList<String> tempList = pageId;
-                    pageId.clear();
-                    pageId.add(newData);
-                    pageId.addAll(tempList);
-                }else {
-                    pageId.add(newData);
-                }
-                if (fragmentArrayList.size() != 0){
-                    fragmentArrayList.clear();
-                }
-                if(arrayList.size() == 0 || arrayList == null){// 程序第一次安装进入程序，数据库没有数据
-                    fragmentArrayList.add(WeatherFragment.newFragment(newData));
-                    fragAdapter = new FragAdapter(getSupportFragmentManager(), fragmentArrayList);
-                    viewPager.setAdapter(fragAdapter);
-                    fragAdapter.notifyDataSetChanged();
-                }else if (arrayList.size() > 1){// 数据库中已经有数据
-                    fragAdapter.addItem(newData);
-                    fragAdapter.notifyDataSetChanged();
-                }else if(arrayList.size() == 1){//
-                    if(arrayList.get(0).compareTo(newData) == 0){
-                        fragmentArrayList.add(WeatherFragment.newFragment(newData));
-                        fragAdapter = new FragAdapter(getSupportFragmentManager(), fragmentArrayList);
-                        viewPager.setAdapter(fragAdapter);
-                        fragAdapter.notifyDataSetChanged();
-                    }else {
-                        fragAdapter.addItem(newData);
-                        fragAdapter.notifyDataSetChanged();
-                    }
-                }
+            String address = "https://api.seniverse.com/v3/location/search.json?key=v2bxdf4yegclkkns&q=" + returnData(data);
+            new MyLocationAsyncTask().execute(address);
 
-                /* 设置底部圆点 */
-                if(dotContainer.getChildCount() != 0){
-                    dotContainer.removeAllViews();
-                }
-                if(arrayList.size() == 1){
-                    dotContainer.setVisibility(View.GONE);
-                }
-                for(int i = 0; i < arrayList.size(); i++){
-                    ImageView imageView = new ImageView(MainActivity.this);
-                    if(i == currentDorPosition){
-                        imageView.setImageResource(R.drawable.guide_dot_black);
-                    }else {
-                        imageView.setImageResource(R.drawable.guide_dot_withe);
-                    }
-                    dotContainer.addView(imageView);
-                }
-
-                Intent intent1 = new Intent();
-                intent1.setAction(UPDATAALL);
-                sendBroadcast(intent1);
-            }
-
-            if(Temp.IS_LOCATION == 1){//定位
-                Temp.IS_LOCATION = 0;
-                ArrayList<String> arrayList = quryFromSQL("Address", "address");
-                insert(arrayList, data);
-                String newData = returnData(data);
-                if(arrayList.size() != 0){
-                    if(fragmentArrayList.size() != 0){
-                        fragmentArrayList.clear();
-                    }
-                    if((pageId != null || pageId.size() != 0) && pageId.size() != 1){
-                        ArrayList<String> tempList = pageId;
-                        pageId.clear();
-                        pageId.add(newData);
-                        pageId.addAll(tempList);
-                    }else {
-                        pageId.add(newData);
-                    }
-                    fragmentArrayList.add(WeatherFragment.newFragment(newData));
-                    for(String s : arrayList){
-                        if(s.compareTo(newData) == 0){
-                            continue;
-                        }
-                        fragmentArrayList.add(WeatherFragment.newFragment(s));
-                        pageId.add(s);
-                    }
-                    fragAdapter = new FragAdapter(getSupportFragmentManager(), fragmentArrayList);
-                    viewPager.setAdapter(fragAdapter);
-                    Toast.makeText(MainActivity.this, "定位到" + bdLocation.getDistrict() + bdLocation.getCity() + bdLocation.getCountry(), Toast.LENGTH_SHORT).show();
-                      /* 设置底部圆点 */
-                    if(dotContainer.getChildCount() != 0){
-                        dotContainer.removeAllViews();
-                    }
-                    if(arrayList.size() == 1){
-                        dotContainer.setVisibility(View.GONE);
-                    }
-                    for(int i = 0; i < arrayList.size(); i++){
-                        ImageView imageView = new ImageView(MainActivity.this);
-                        if(i == currentDorPosition){
-                            imageView.setImageResource(R.drawable.guide_dot_black);
-                        }else {
-                            imageView.setImageResource(R.drawable.guide_dot_withe);
-                        }
-                        dotContainer.addView(imageView);
-                    }
-                }
-            }
+            //Toast.makeText(MainActivity.this, "定位到" + bdLocation.getDistrict() + bdLocation.getCity() + bdLocation.getCountry(), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -482,6 +374,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     /**
+     * 从数据库中删除数据
+     * @param bookName 表名
+     * @param deleteData 要删除的数据
+     */
+    private void deleteFromSQL(String bookName, String where, String deleteData){
+        SQLiteDatabase db = sqlDatabase.getWritableDatabase();
+        db.delete(bookName, where, new String[]{deleteData});
+    }
+
+    /**
      * 从数据库中查询数据
      * @param bookName 表名
      * @param colName  列名
@@ -519,22 +421,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         }
                         ArrayList<String> arrayList = quryFromSQL("Address", "address");
                         if (arrayList.size() != 0) {
-                            if (fragmentArrayList.size() != 0) {
-                                fragmentArrayList.clear();
+                            for(String s : Temp.deleteArrayList){
+                                fragAdapter.deleteItem(s);
+                                fragmentArrayList.remove(s);
+                                fragAdapter.notifyDataSetChanged();
                             }
-                            for (String s : arrayList) {
-                                fragmentArrayList.add(WeatherFragment.newFragment(s));
-                                pageId.add(s);
-                            }
-                            fragAdapter = new FragAdapter(getSupportFragmentManager(), fragmentArrayList);
-                            viewPager.setAdapter(fragAdapter);
                         }
+
                         /* 设置底部圆点 */
                         if(dotContainer.getChildCount() != 0){
                             dotContainer.removeAllViews();
+                        }else {
+                            dotContainer.setVisibility(View.VISIBLE);
                         }
                         if(arrayList.size() == 1){
                             dotContainer.setVisibility(View.GONE);
+                        }else {
+                            dotContainer.setVisibility(View.VISIBLE);
                         }
                         for(int i = 0; i < arrayList.size(); i++){
                             ImageView imageView = new ImageView(MainActivity.this);
@@ -551,23 +454,116 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+
     /**
-     * 插入解析过的数据到数据库
-     * @param arrayList
-     * @param oldAddress
+     * 城市搜索的位置请求
      */
-    private void insert(ArrayList<String> arrayList, String oldAddress){
-        int k = 1;
-        String data = returnData(oldAddress);
-        if(arrayList.size() != 0 && arrayList != null){
-            for(String s : arrayList){
-                if(s.compareTo(data) == 0){
-                    k = 0;
+    private class MyLocationAsyncTask extends AsyncTask<String, Integer, String> {
+
+        @Override
+        protected String doInBackground(String... params) {
+            String address = params[0];
+            String response = HttpUnity.sendHttpRequest(address);
+            return response;
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            if (!TextUtils.isEmpty(s)){
+                locationArrayList = JSONUnity.praseLocationResponse(s);
+                if(locationArrayList.size() != 0 && locationArrayList != null){
+                    String address = locationArrayList.get(0).locationId;//返回来的位置id
+                    ArrayList<String> arrayList = quryFromSQL("Address", "address");
+                    Temp.location = address;
+                    SPFDatabase.preferenceData("location", address);
+
+                    if(Temp.IS_STARTACTIVITY == 1){//第一次进入主活动
+                        Temp.IS_STARTACTIVITY = 0;
+                        if(arrayList.size() == 0 || arrayList == null){// 程序第一次安装进入程序，数据库没有数据
+                            if (fragmentArrayList.size() != 0){
+                                fragmentArrayList.clear();
+                            }
+                            insert(arrayList, address);
+                            fragmentArrayList.add(WeatherFragment.newFragment(address));
+                            pageId.add(address);
+                            fragAdapter = new FragAdapter(getSupportFragmentManager(), fragmentArrayList);
+                            viewPager.setAdapter(fragAdapter);
+                            fragAdapter.notifyDataSetChanged();
+                        }
+                    }
+
+                    if(Temp.IS_LOCATION == 1){//定位
+                        Temp.IS_LOCATION = 0;
+                        if(arrayList.size() != 0){
+                            insert(arrayList, address);
+                            int k = 1;
+                            for(String str : arrayList){
+                                if(str.compareTo(address) == 0)
+                                    k = 0;
+                            }
+                            if(k == 1){//没有定位过
+                                if((pageId != null || pageId.size() != 0) && pageId.size() != 1){
+                                    ArrayList<String> tempList = pageId;
+                                    pageId.clear();
+                                    pageId.add(address);
+                                    pageId.addAll(tempList);
+                                }else {
+                                    pageId.add(address);
+                                }
+                                fragAdapter.addItem(address);
+                                viewPager.setCurrentItem(0);
+                                fragAdapter.notifyDataSetChanged();
+                                /* 设置底部圆点 */
+                                if(dotContainer.getChildCount() != 0){
+                                    dotContainer.removeAllViews();
+                                }
+                                ArrayList<String> arrayList1 = quryFromSQL("Address", "address");
+                                if(arrayList1.size() == 1){
+                                    dotContainer.setVisibility(View.GONE);
+                                }else {
+                                    dotContainer.setVisibility(View.VISIBLE);
+                                }
+                                for(int i = 0; i < arrayList1.size(); i++){
+                                    ImageView imageView = new ImageView(MainActivity.this);
+                                    if(i == currentDorPosition){
+                                        imageView.setImageResource(R.drawable.guide_dot_black);
+                                    }else {
+                                        imageView.setImageResource(R.drawable.guide_dot_withe);
+                                    }
+                                    dotContainer.addView(imageView);
+                                }
+                            }else {//已经定位过
+                                Toast.makeText(MainActivity.this, "已有定位", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    }
+                    Intent intent1 = new Intent();
+                    intent1.setAction(UPDATAALL);
+                    sendBroadcast(intent1);
                 }
             }
         }
+    }
+
+    /**
+     * 插入解析过的数据到数据库,查看数据库有没有
+     * @param arrayList
+     */
+    private void insert(ArrayList<String> arrayList, String data){
+        int k = 1;
+        for(String s : arrayList){
+            if(s.compareTo(data) == 0){
+                k = 0;
+            }
+        }
         if(k == 1){
+            for(String s : arrayList){
+                deleteFromSQL("Address", "address == ?", s);
+            }
             insertInSQL("Address", "address", data);
+            for(String s : arrayList){
+                insertInSQL("Address", "address", s);
+            }
         }
     }
 
@@ -637,9 +633,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return bitmap;
     }
 
-        /**
-         * 改变背景透明度
-         */
+    /**
+     * 改变背景透明度
+     */
     private void changeBackgoundAlpha(String color){
 //        WindowManager.LayoutParams lp = getWindow().getAttributes();
 //        lp.alpha = alpha;

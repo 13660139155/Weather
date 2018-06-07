@@ -213,17 +213,27 @@ public class SearchCityActivity extends AppCompatActivity implements View.OnClic
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         Location location = locationArrayList.get(position);
-        int k = 1;
         ArrayList<String> arrayList = quryFromSQL("Address", "address");
+        int k = 1;
         if(arrayList.size() != 0 && arrayList != null){
             for(String s : arrayList){
-                if(s.compareTo(location.locationId) == 0 || s.compareTo("WS0E9D8WN298") == 0){
+                if(s.compareTo(location.locationId) == 0){
                     k = 0;
                 }
             }
         }
         if(k == 1){
-            if(location.locationId.compareTo("WS0E9D8WN298") != 0) {
+            if(Temp.location.compareTo(location.locationId) == 0){
+                if(arrayList.size() != 0 && arrayList != null){
+                    for(String s : arrayList){
+                        deleteFromSQL("Address", "address == ?", s);
+                    }
+                    insertInSQL("Address", "address", location.locationId);
+                    for(String s : arrayList){
+                        insertInSQL("Address", "address", s);
+                    }
+                }
+            }else {
                 insertInSQL("Address", "address", location.locationId);
             }
         }
@@ -263,6 +273,16 @@ public class SearchCityActivity extends AppCompatActivity implements View.OnClic
                }
            }
         }
+    }
+
+    /**
+     * 从数据库中删除数据
+     * @param bookName 表名
+     * @param deleteData 要删除的数据
+     */
+    private void deleteFromSQL(String bookName, String where, String deleteData){
+        SQLiteDatabase db = sqlDatabase.getWritableDatabase();
+        db.delete(bookName, where, new String[]{deleteData});
     }
 
     /**

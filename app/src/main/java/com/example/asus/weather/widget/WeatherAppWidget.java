@@ -109,7 +109,7 @@ public class WeatherAppWidget extends AppWidgetProvider {
         views.setTextViewText(R.id.text_widget_tomorrow, "明天");
         views.setTextViewText(R.id.text_widget_next_day, "后天");
 
-        String location = SPFDatabase.extractData(Temp.location);
+        String location = SPFDatabase.extractData("location");
 
         if(dbAddressList.size() != 0){
             for(final String s : dbAddressList){

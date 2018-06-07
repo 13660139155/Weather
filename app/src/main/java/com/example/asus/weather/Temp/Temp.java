@@ -18,8 +18,10 @@ public class Temp {
     public static int IS_STARTACTIVITY = 1;
     /**  是否定位，默认否*/
     public static int IS_LOCATION = 0;
-    /**  */
+    /** 有没有删除 */
     public static int IS_DELETE = 0;
     /** 位置 */
     public static String location;
+    /** 被删除的天气集合 */
+    public static ArrayList<String> deleteArrayList = new ArrayList<>();
 }
