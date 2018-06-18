@@ -16,7 +16,7 @@
     <application
         android:name=".MyApplication"
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/weather_icon"
         android:label="Weather"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
@@ -27,11 +27,7 @@
         <activity
             android:name=".MainActivity"
             android:label="">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
 
         <service
@@ -44,25 +40,35 @@
             android:label="城市管理" />
         <activity
             android:name=".SearchCityActivity"
-            android:label=""/>
+            android:label="" />
 
         <service
             android:name=".services.WeatherUpdataService"
             android:enabled="true"
             android:exported="true" />
 
-        <receiver android:name=".widget.WeatherAppWidget"
+        <receiver
+            android:name=".widget.WeatherAppWidget"
             android:enabled="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="com.example.asus.weather.UPDATAALL"/>
-                <action android:name="com.example.asus.weather.DELETE"/>
+                <action android:name="com.example.asus.weather.UPDATAALL" />
+                <action android:name="com.example.asus.weather.DELETE" />
             </intent-filter>
 
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/weather_app_widget_info" />
         </receiver>
+
+        <activity android:name=".SplashActivity"
+            android:label="Weather">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>

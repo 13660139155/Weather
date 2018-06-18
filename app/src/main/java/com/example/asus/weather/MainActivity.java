@@ -13,13 +13,13 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.view.Display;
@@ -45,6 +45,7 @@ import com.example.asus.weather.Temp.Temp;
 import com.example.asus.weather.adapter.FragAdapter;
 import com.example.asus.weather.adapter.ListSearchAdapter;
 import com.example.asus.weather.db.SQLDatabase;
+import com.example.asus.weather.file.FileDatabase;
 import com.example.asus.weather.file.SPFDatabase;
 import com.example.asus.weather.fragment.WeatherFragment;
 import com.example.asus.weather.json.Location;
@@ -56,6 +57,7 @@ import com.example.asus.weather.unit.HttpUnity;
 import com.example.asus.weather.unit.JSONUnity;
 import com.example.asus.weather.unit.MyPopupWindow;
 
+import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -67,7 +69,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     LinearLayout dotContainer;//底部导航栏圆点容器
     FragAdapter fragAdapter;
     ImageView imageViewAdd;
-    ScrollView scrollView;
     Toolbar toolbar;
     ImageView imageViewThree;//底部弹出菜单按钮
 
@@ -117,7 +118,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         toolbar = (Toolbar) findViewById(R.id.main_toolbar);
         imageViewThree = (ImageView)findViewById(R.id.image_three_point);
         dotContainer = (LinearLayout)findViewById(R.id.linear_dot_container);
-        scrollView = (ScrollView)findViewById(R.id.scroll_view);
 
         fragmentArrayList = new ArrayList<>();
         setSupportActionBar(toolbar);
@@ -179,6 +179,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             fragAdapter = new FragAdapter(getSupportFragmentManager(), fragmentArrayList);
             viewPager.setAdapter(fragAdapter);
             fragAdapter.notifyDataSetChanged();
+            for (Fragment fragment : fragmentArrayList){
+                Temp.weatherFragmentTreeMap.put(fragment.getArguments().getString("key"), (WeatherFragment) fragment);
+            }
         }
 
          /* 设置底部圆点 */
@@ -209,14 +212,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         myPopupWindow.dismiss();
                         break;
                     case R.id.text_shared:
+//                        Intent intent = new Intent(Intent.ACTION_SEND);
+//                        intent.setType("text/plain");
+//                        intent.putExtra(Intent.EXTRA_SUBJECT, "我是标题");
+//                        Now now = Temp.treeMapWeatherAddress.get(pageId.get(pagePosition));
+//                        intent.putExtra(Intent.EXTRA_TEXT, now.nowText + " / "  + now.nowTemperature + "℃" + "\n" + now.update);
+//                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//                        startActivity(Intent.createChooser(intent, "分享到"));
+                        Bitmap bitmap = shotScrollView(Temp.weatherFragmentTreeMap.get(pageId.get(pagePosition)).getScrollView());
+                        FileDatabase.saveBitmap("bitmap", bitmap);
+                        Bitmap bitmap1 = FileDatabase.loadBitmap("bitmap");
                         Intent intent = new Intent(Intent.ACTION_SEND);
-                        intent.setType("text/plain");
-                        intent.putExtra(Intent.EXTRA_SUBJECT, "我是标题");
-                        Now now = Temp.treeMapWeatherAddress.get(pageId.get(pagePosition));
-                        intent.putExtra(Intent.EXTRA_TEXT, now.nowText + " / "  + now.nowTemperature + "℃" + "\n" + now.update);
+                        File file = new File(MyApplication.getContext().getFilesDir(), "bitmap");
+                        if(file != null && file.exists()) {
+                            intent.setType("image/*");
+                            //由文件得到路径
+                            Uri uri = Uri.fromFile(file);
+                            intent.putExtra(Intent.EXTRA_STREAM, uri);
+                        }else{
+                            intent.setType("text/plain");
+                        }
                         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                         startActivity(Intent.createChooser(intent, "分享到"));
-                        //Bitmap bitmap = shotScrollView(scrollView);
                         myPopupWindow.dismiss();
                         break;
                     default:
@@ -231,6 +248,73 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 //  changeBackgoundAlpha(1.0f);
             }
         });
+
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        locationClient.stop();
+        unregisterReceiver(networkChangeReceiver);
+        Intent intentService = new Intent(this, WeatherUpdataService.class);
+        startService(intentService);
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        Temp.IS_STARTACTIVITY = 1;
+        ActivityCollector.finishAll();
+    }
+
+    /**
+     * 处理从上一个活动返回时的逻辑
+     * @param requestCode
+     * @param resultCode
+     * @param data
+     */
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode){
+            case 1:
+                if(RESULT_OK == resultCode) {
+                    String result = data.getStringExtra("data_return");
+                    if (result.compareTo("reset") == 0) {
+                        ArrayList<String> arrayList = quryFromSQL("Address", "address");
+                        if (arrayList.size() != 0) {
+                            for(String s : Temp.deleteArrayList){
+                                fragAdapter.deleteItem(s);
+                                fragmentArrayList.remove(s);
+                                pageId.remove(s);
+                                Temp.weatherFragmentTreeMap.remove(s);
+                                fragAdapter.notifyDataSetChanged();
+                            }
+                        }
+
+                        /* 设置底部圆点 */
+                        if(dotContainer.getChildCount() != 0){
+                            dotContainer.removeAllViews();
+                        }else {
+                            dotContainer.setVisibility(View.VISIBLE);
+                        }
+                        if(arrayList.size() == 1){
+                            dotContainer.setVisibility(View.GONE);
+                        }else {
+                            dotContainer.setVisibility(View.VISIBLE);
+                        }
+                        for(int i = 0; i < arrayList.size(); i++){
+                            ImageView imageView = new ImageView(MainActivity.this);
+                            if(i == currentDorPosition){
+                                imageView.setImageResource(R.drawable.guide_dot_black);
+                            }else {
+                                imageView.setImageResource(R.drawable.guide_dot_withe);
+                            }
+                            dotContainer.addView(imageView);
+                        }
+                    }
+                }
+                break;
+        }
     }
 
     @Override
@@ -319,15 +403,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         locationClient.start();
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        locationClient.stop();
-        unregisterReceiver(networkChangeReceiver);
-        Intent intentService = new Intent(this, WeatherUpdataService.class);
-        startService(intentService);
-    }
-
     /**
      * 启动活动
      *
@@ -404,58 +479,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     /**
-     * 处理从上一个活动返回时的逻辑
-     * @param requestCode
-     * @param resultCode
-     * @param data
-     */
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        switch (requestCode){
-            case 1:
-                if(RESULT_OK == resultCode) {
-                    String result = data.getStringExtra("data_return");
-                    if (result.compareTo("reset") == 0) {
-                        if (pageId != null || pageId.size() != 0) {
-                            pageId.clear();
-                        }
-                        ArrayList<String> arrayList = quryFromSQL("Address", "address");
-                        if (arrayList.size() != 0) {
-                            for(String s : Temp.deleteArrayList){
-                                fragAdapter.deleteItem(s);
-                                fragmentArrayList.remove(s);
-                                fragAdapter.notifyDataSetChanged();
-                            }
-                        }
-
-                        /* 设置底部圆点 */
-                        if(dotContainer.getChildCount() != 0){
-                            dotContainer.removeAllViews();
-                        }else {
-                            dotContainer.setVisibility(View.VISIBLE);
-                        }
-                        if(arrayList.size() == 1){
-                            dotContainer.setVisibility(View.GONE);
-                        }else {
-                            dotContainer.setVisibility(View.VISIBLE);
-                        }
-                        for(int i = 0; i < arrayList.size(); i++){
-                            ImageView imageView = new ImageView(MainActivity.this);
-                            if(i == currentDorPosition){
-                                imageView.setImageResource(R.drawable.guide_dot_black);
-                            }else {
-                                imageView.setImageResource(R.drawable.guide_dot_withe);
-                            }
-                            dotContainer.addView(imageView);
-                        }
-                    }
-                }
-            break;
-        }
-    }
-
-
-    /**
      * 城市搜索的位置请求
      */
     private class MyLocationAsyncTask extends AsyncTask<String, Integer, String> {
@@ -486,6 +509,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             insert(arrayList, address);
                             fragmentArrayList.add(WeatherFragment.newFragment(address));
                             pageId.add(address);
+                            Temp.weatherFragmentTreeMap.put(address,(WeatherFragment) WeatherFragment.newFragment(address));
                             fragAdapter = new FragAdapter(getSupportFragmentManager(), fragmentArrayList);
                             viewPager.setAdapter(fragAdapter);
                             fragAdapter.notifyDataSetChanged();
@@ -510,6 +534,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 }else {
                                     pageId.add(address);
                                 }
+                                Temp.weatherFragmentTreeMap.put(address,(WeatherFragment) WeatherFragment.newFragment(address));
                                 fragAdapter.addItem(address);
                                 viewPager.setCurrentItem(0);
                                 fragAdapter.notifyDataSetChanged();
@@ -598,13 +623,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return str;
     }
 
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        Temp.IS_STARTACTIVITY = 1;
-        ActivityCollector.finishAll();
-    }
-
     /**
      * 获取系统状态栏高度
      * @param context
@@ -620,6 +638,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return statusBarHeight;
     }
 
+    /**
+     * 截取ScrollView图片
+     * @param scrollView
+     * @return
+     */
     public static Bitmap shotScrollView(ScrollView scrollView) {
         int h = 0;
         Bitmap bitmap = null;

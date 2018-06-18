@@ -16,6 +16,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -53,6 +54,9 @@ public class WeatherFragment extends Fragment implements SwipeRefreshLayout.OnRe
     private LinearLayoutManager linearLayoutManager;
     private RecyclerView recyclerView;
     private DailyAdapter dailyAdapter;
+    private View view;
+
+    ScrollView scrollView;
 
     Weather weather;
     ImageView imageViewBg;
@@ -91,7 +95,7 @@ public class WeatherFragment extends Fragment implements SwipeRefreshLayout.OnRe
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_weather, container, false);
+        view = inflater.inflate(R.layout.fragment_weather, container, false);
         weather = new Weather();
         swipeRefreshLayout = (SwipeRefreshLayout)view.findViewById(R.id.swipe_refresh);
         textViewNowLocation = (TextView)view.findViewById(R.id.text_view_location);
@@ -155,6 +159,17 @@ public class WeatherFragment extends Fragment implements SwipeRefreshLayout.OnRe
             }
         }
         return view;
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        scrollView = (ScrollView) view.findViewById(R.id.scroll_view);
+
+    }
+
+    public ScrollView getScrollView() {
+        return scrollView;
     }
 
     /**
@@ -590,6 +605,9 @@ public class WeatherFragment extends Fragment implements SwipeRefreshLayout.OnRe
         return str;
     }
 
+    /**
+     * 测量出每个RecycleView的item大小
+     */
     public class FullyLinearLayoutManager extends LinearLayoutManager {
 
         private final String TAG = FullyLinearLayoutManager.class.getSimpleName();

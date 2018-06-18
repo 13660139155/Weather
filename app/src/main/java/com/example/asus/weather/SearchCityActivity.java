@@ -264,10 +264,8 @@ public class SearchCityActivity extends AppCompatActivity implements View.OnClic
                    listView.setAdapter(listSearchAdapter);
                    listSearchAdapter.notifyDataSetChanged();
                }else {
-                   if(locationArrayList != null && locationArrayList.size() != 0){
-                       listSearchAdapter.clearAll(true);
-                       listSearchAdapter.notifyDataSetChanged();
-                   }
+                   listSearchAdapter.clearAll(true);
+                   listSearchAdapter.notifyDataSetChanged();
                    textViewhasCity.setVisibility(View.VISIBLE);
                    textViewhasCity.setText("无匹配城市");
                }
