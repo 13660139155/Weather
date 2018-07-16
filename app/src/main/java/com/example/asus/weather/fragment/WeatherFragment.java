@@ -165,7 +165,7 @@ public class WeatherFragment extends Fragment implements SwipeRefreshLayout.OnRe
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         scrollView = (ScrollView) view.findViewById(R.id.scroll_view);
-
+        scrollView.smoothScrollTo(0, 0);
     }
 
     public ScrollView getScrollView() {
