@@ -5,30 +5,19 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
-import android.os.Build;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
-import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -45,6 +34,10 @@ import com.example.asus.weather.unit.JSONUnity;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 public class SearchCityActivity extends AppCompatActivity implements View.OnClickListener,
         TextWatcher,
@@ -73,12 +66,12 @@ public class SearchCityActivity extends AppCompatActivity implements View.OnClic
         registerReceiver(networkChangeReceiver, intentFilter);
         setContentView(R.layout.activity_search_city);
         ActivityCollector.addActivity(this);
-        editTextEdit = (EditText)findViewById(R.id.edit_edit);
-        imageViewDelete = (ImageView)findViewById(R.id.image_delete);
-        imageViewSearch = (ImageView)findViewById(R.id.image_search);
-        textViewhasCity = (TextView)findViewById(R.id.text_has_city);
-        Toolbar toolbar = (Toolbar)findViewById(R.id.search_city_toolbar);
-        listView = (ListView)findViewById(R.id.list_search);
+        editTextEdit = findViewById(R.id.edit_edit);
+        imageViewDelete = findViewById(R.id.image_delete);
+        imageViewSearch = findViewById(R.id.image_search);
+        textViewhasCity = findViewById(R.id.text_has_city);
+        Toolbar toolbar = findViewById(R.id.search_city_toolbar);
+        listView = findViewById(R.id.list_search);
 
         sqlDatabase = new SQLDatabase(SearchCityActivity.this, "Weather.db", null, 1);
         setSupportActionBar(toolbar);

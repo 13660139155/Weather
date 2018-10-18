@@ -1,19 +1,17 @@
 package com.example.asus.weather.adapter;
 
-import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
-
-import com.example.asus.weather.MyApplication;
 import com.example.asus.weather.R;
 import com.example.asus.weather.json.Daily;
 import com.example.asus.weather.view.WeatherLineView;
 
 import java.util.ArrayList;
+
+import androidx.recyclerview.widget.RecyclerView;
 
 /**
  * Created by ASUS on 2018/5/30.

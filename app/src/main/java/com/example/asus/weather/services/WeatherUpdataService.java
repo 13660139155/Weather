@@ -18,8 +18,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.HashSet;
 
-import static android.support.v7.widget.StaggeredGridLayoutManager.TAG;
-
+import static android.content.ContentValues.TAG;
 
 /**
  * 后台更新天气
@@ -47,8 +46,6 @@ public class WeatherUpdataService extends Service {
             requestLocationWeather(s);
             requestSuggestionWeather(s);
         }
-        Log.d(TAG, "onStartCommand ");
-
         AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
         int hour = 1000 * 60 * 60;//一小时
         long triggerAtTime = SystemClock.elapsedRealtime() + hour;

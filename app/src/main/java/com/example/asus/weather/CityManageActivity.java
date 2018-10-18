@@ -1,18 +1,12 @@
 package com.example.asus.weather;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
-import android.support.design.widget.FloatingActionButton;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -29,7 +23,15 @@ import com.example.asus.weather.json.Weather;
 import com.example.asus.weather.unit.ActivityCollector;
 import com.example.asus.weather.unit.HttpUnity;
 import com.example.asus.weather.unit.JSONUnity;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
 import java.util.ArrayList;
+
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 public class CityManageActivity extends AppCompatActivity implements View.OnClickListener{
 
@@ -45,14 +47,15 @@ public class CityManageActivity extends AppCompatActivity implements View.OnClic
     private boolean IS_EDIT = false;
     private SQLDatabase sqlDatabase;
 
+    @SuppressLint("WrongConstant")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_manage_city);
         ActivityCollector.addActivity(this);
-        floatingActionButton = (FloatingActionButton)findViewById(R.id.float_button);
-        Toolbar toolbar = (Toolbar)findViewById(R.id.city_manage_toolbar);
-        recyclerView = (RecyclerView)findViewById(R.id.recycler_view);
+        floatingActionButton = findViewById(R.id.float_button);
+        Toolbar toolbar = findViewById(R.id.city_manage_toolbar);
+        recyclerView = findViewById(R.id.recycler_view);
         weatherArrayList = new ArrayList<>();
         sqlDatabase = new SQLDatabase(this, "Weather.db", null, 1);
         setSupportActionBar(toolbar);
@@ -90,8 +93,6 @@ public class CityManageActivity extends AppCompatActivity implements View.OnClic
         cityManageAdapter = new CityManageAdapter(weatherArrayList);
         recyclerView.setAdapter(cityManageAdapter);
     }
-
-
 
     /**
      * 控件点击事件监听

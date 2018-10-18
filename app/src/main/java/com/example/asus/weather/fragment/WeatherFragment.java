@@ -1,15 +1,12 @@
 package com.example.asus.weather.fragment;
 
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
-import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
+import android.os.Handler;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -20,7 +17,6 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.asus.weather.MyApplication;
 import com.example.asus.weather.R;
 import com.example.asus.weather.Temp.Temp;
 import com.example.asus.weather.adapter.DailyAdapter;
@@ -38,6 +34,12 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import static com.example.asus.weather.MainActivity.IS_NETWORK_AVAILABLE;
 
@@ -92,41 +94,42 @@ public class WeatherFragment extends Fragment implements SwipeRefreshLayout.OnRe
     SwipeRefreshLayout swipeRefreshLayout;
     String address;
 
+    @SuppressLint("ResourceAsColor")
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         view = inflater.inflate(R.layout.fragment_weather, container, false);
         weather = new Weather();
-        swipeRefreshLayout = (SwipeRefreshLayout)view.findViewById(R.id.swipe_refresh);
-        textViewNowLocation = (TextView)view.findViewById(R.id.text_view_location);
-        imageViewNowCode = (ImageView)view.findViewById(R.id.image_view_now);
-        textViewNowTemp = (TextView)view.findViewById(R.id.text_view_temp);
-        textViewNowText = (TextView)view.findViewById(R.id.text_view_now);
-        textViewNowPrecip = (TextView)view.findViewById(R.id.text_view_now_precip);
-        textViewNowWind = (TextView)view.findViewById(R.id.text_view_now_wind);
-        textViewNowWindDirection = (TextView)view.findViewById(R.id.text_view_now_wind_direction);
-        textViewNowWindScale = (TextView)view.findViewById(R.id.text_view_now_wind_scale);
-        imageViewBg = (ImageView)view.findViewById(R.id.image_bg);
+        swipeRefreshLayout = view.findViewById(R.id.swipe_refresh);
+        textViewNowLocation = view.findViewById(R.id.text_view_location);
+        imageViewNowCode = view.findViewById(R.id.image_view_now);
+        textViewNowTemp = view.findViewById(R.id.text_view_temp);
+        textViewNowText = view.findViewById(R.id.text_view_now);
+        textViewNowPrecip = view.findViewById(R.id.text_view_now_precip);
+        textViewNowWind = view.findViewById(R.id.text_view_now_wind);
+        textViewNowWindDirection = view.findViewById(R.id.text_view_now_wind_direction);
+        textViewNowWindScale = view.findViewById(R.id.text_view_now_wind_scale);
+        imageViewBg = view.findViewById(R.id.image_bg);
 
-        imageViewCode1 = (ImageView)view.findViewById(R.id.image_now_code);
-        textViewText1 = (TextView)view.findViewById(R.id.text_now_text);
-        textViewTemp1 = (TextView)view.findViewById(R.id.text_now_temp);
-        imageViewCode2 = (ImageView)view.findViewById(R.id.image_daily_code);
-        textViewText2 = (TextView)view.findViewById(R.id.text_daily_text);
-        textViewTemp2 = (TextView)view.findViewById(R.id.text_daily_temp);
-        imageViewCode3 = (ImageView)view.findViewById(R.id.image_daily_code2);
-        textViewText3 = (TextView)view.findViewById(R.id.text_daily_text2);
-        textViewTemp3 = (TextView)view.findViewById(R.id.text_daily_temp2);
+        imageViewCode1 = view.findViewById(R.id.image_now_code);
+        textViewText1 = view.findViewById(R.id.text_now_text);
+        textViewTemp1 = view.findViewById(R.id.text_now_temp);
+        imageViewCode2 = view.findViewById(R.id.image_daily_code);
+        textViewText2 = view.findViewById(R.id.text_daily_text);
+        textViewTemp2 = view.findViewById(R.id.text_daily_temp);
+        imageViewCode3 = view.findViewById(R.id.image_daily_code2);
+        textViewText3 = view.findViewById(R.id.text_daily_text2);
+        textViewTemp3 = view.findViewById(R.id.text_daily_temp2);
 
-        textViewDressingB = (TextView)view.findViewById(R.id.text_sug_dressing_brief);
-        textViewUvB = (TextView)view.findViewById(R.id.text_sug_uv_brief);
-        textViewCarB = (TextView)view.findViewById(R.id.text_sug_car_brief);
-        textViewDressingB = (TextView)view.findViewById(R.id.text_sug_dressing_brief);
-        textViewFishingB = (TextView)view.findViewById(R.id.text_sug_fishing_brief);
-        textViewSportB = (TextView)view.findViewById(R.id.text_sug_sport_brief);
-        textViewTravelB = (TextView)view.findViewById(R.id.text_sug_travel_brief);
+        textViewDressingB = view.findViewById(R.id.text_sug_dressing_brief);
+        textViewUvB = view.findViewById(R.id.text_sug_uv_brief);
+        textViewCarB = view.findViewById(R.id.text_sug_car_brief);
+        textViewDressingB = view.findViewById(R.id.text_sug_dressing_brief);
+        textViewFishingB = view.findViewById(R.id.text_sug_fishing_brief);
+        textViewSportB = view.findViewById(R.id.text_sug_sport_brief);
+        textViewTravelB = view.findViewById(R.id.text_sug_travel_brief);
 
-        recyclerView = (RecyclerView)view.findViewById(R.id.recycler_view_line);
+        recyclerView = view.findViewById(R.id.recycler_view_line);
 
         swipeRefreshLayout.setColorSchemeColors(R.color.colorPrimary);
         swipeRefreshLayout.setOnRefreshListener(this);
@@ -164,7 +167,13 @@ public class WeatherFragment extends Fragment implements SwipeRefreshLayout.OnRe
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        scrollView = (ScrollView) view.findViewById(R.id.scroll_view);
+        scrollView =  view.findViewById(R.id.scroll_view);
+        scrollView.smoothScrollTo(0, 0);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
         scrollView.smoothScrollTo(0, 0);
     }
 

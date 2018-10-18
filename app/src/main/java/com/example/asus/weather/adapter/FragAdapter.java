@@ -1,20 +1,15 @@
 package com.example.asus.weather.adapter;
-
-import android.app.Activity;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
-import android.support.v4.app.FragmentStatePagerAdapter;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v4.view.PagerAdapter;
-import android.support.v7.app.ActionBar;
 import android.util.Log;
 import android.view.ViewGroup;
 
-import com.example.asus.weather.MyApplication;
 import com.example.asus.weather.fragment.WeatherFragment;
 
 import java.util.ArrayList;
+
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentStatePagerAdapter;
+import androidx.viewpager.widget.PagerAdapter;
 
 /**
  * viewpager适配器
@@ -26,7 +21,7 @@ public class FragAdapter extends FragmentStatePagerAdapter {
     private ArrayList<Fragment> mFragments;
     private FragmentManager fragmentManager;
 
-    public FragAdapter(FragmentManager fm,ArrayList<Fragment> fragments) {
+    public FragAdapter(FragmentManager fm, ArrayList<Fragment> fragments) {
         super(fm);
         mFragments = fragments;
         fragmentManager = fm;

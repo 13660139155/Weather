@@ -16,16 +16,10 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
-import android.support.v4.app.Fragment;
-import android.support.v4.view.ViewPager;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
-import android.view.Display;
+import android.util.Log;
 import android.view.Gravity;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -43,14 +37,11 @@ import com.baidu.location.LocationClient;
 import com.baidu.location.LocationClientOption;
 import com.example.asus.weather.Temp.Temp;
 import com.example.asus.weather.adapter.FragAdapter;
-import com.example.asus.weather.adapter.ListSearchAdapter;
 import com.example.asus.weather.db.SQLDatabase;
 import com.example.asus.weather.file.FileDatabase;
 import com.example.asus.weather.file.SPFDatabase;
 import com.example.asus.weather.fragment.WeatherFragment;
 import com.example.asus.weather.json.Location;
-import com.example.asus.weather.json.Now;
-import com.example.asus.weather.json.Weather;
 import com.example.asus.weather.services.WeatherUpdataService;
 import com.example.asus.weather.unit.ActivityCollector;
 import com.example.asus.weather.unit.HttpUnity;
@@ -61,6 +52,11 @@ import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.fragment.app.Fragment;
+import androidx.viewpager.widget.ViewPager;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, ViewPager.OnPageChangeListener {
 
@@ -113,17 +109,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         setContentView(R.layout.activity_main);
 
-        imageViewAdd = (ImageView) findViewById(R.id.image_add);
-        viewPager = (ViewPager) findViewById(R.id.viewpager);
-        toolbar = (Toolbar) findViewById(R.id.main_toolbar);
-        imageViewThree = (ImageView)findViewById(R.id.image_three_point);
-        dotContainer = (LinearLayout)findViewById(R.id.linear_dot_container);
+        imageViewAdd = findViewById(R.id.image_add);
+        viewPager = findViewById(R.id.viewpager);
+        toolbar = findViewById(R.id.main_toolbar);
+        imageViewThree = findViewById(R.id.image_three_point);
+        dotContainer = findViewById(R.id.linear_dot_container);
 
         fragmentArrayList = new ArrayList<>();
         setSupportActionBar(toolbar);
         imageViewAdd.setOnClickListener(this);
         imageViewThree.setOnClickListener(this);
-        viewPager.setOnPageChangeListener(this);
+        viewPager.addOnPageChangeListener(this);
 
         openLocation();
 
@@ -133,7 +129,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if(pageId != null || pageId.size() != 0){
             pageId.clear();
         }
-
         if (!TextUtils.isEmpty(address)) {//从其他活动跳转来
             if(fragmentArrayList.size() != 0){
                 fragmentArrayList.clear();
@@ -350,6 +345,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 return;
             }
             String data = bdLocation.getCity();//中文城市
+
+            Log.d("rain", "onReceiveLocation: "  + bdLocation.getDistrict() + bdLocation.getCountryCode());
             if(data == null){
                 data = "广州";
             }
