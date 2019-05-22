@@ -223,7 +223,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             intent.setType("image/*");
                             //由文件得到路径
                             Uri uri = Uri.fromFile(file);
-                            intent.putExtra(Intent.EXTRA_STREAM, file.getPath());
+                            intent.putExtra(Intent.EXTRA_STREAM, uri);
                         }else{
                             intent.setType("text/plain");
                         }

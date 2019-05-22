@@ -44,7 +44,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:layout_margin="5dp">
+                    android:layout_margin="5dp"
+                    android:descendantFocusability="blocksDescendants">
 
                     <include layout="@layout/item1_weather"/>
                     <include layout="@layout/item2_weather"/>
